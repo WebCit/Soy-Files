@@ -1,0 +1,785 @@
+{namespace wmsoy.newssystem.backend}
+
+/**
+ * Render the backendbar for backend navigation: delete, edit and sort
+ * @param modellid
+ * @param active
+ * @param archiv
+ * @param schedule
+ */
+{template .backendbar}
+	<div id="wmnews_backend_nav_{$modellid}" class="news_backend_nav">
+		<div class="news_backendnav_1">
+			<img class="image-edit images editmodel" src="http://www.webmart.de/dot.gif" id="edit_{$modellid}" title="Editieren" alt="Editieren" style="cursor:pointer;"/>&nbsp;&nbsp;&nbsp;
+			<img class="image-arrowup images sortmodel" src="http://www.webmart.de/dot.gif" id="sort_{$modellid}" title="An oberste Stelle verschieben" alt="An oberste Stelle verschieben" style="cursor:pointer;"/>&nbsp;&nbsp;&nbsp;
+			<img class="image-cross images deletemodel" src="http://www.webmart.de/dot.gif" id="delete_{$modellid}" title="L&ouml;schen" alt="L&ouml;schen" style="cursor:pointer;"/>&nbsp;&nbsp;&nbsp;
+		</div>
+		<div class="news_backendnav_2">
+			<span id="activatemodelspan_{$modellid}"><img class="{if $active == 1}image-ac{else}image-inac{/if} images activatemodel" src="http://www.webmart.de/dot.gif" id="active_{$modellid}" title="Artikel aktivieren / deaktivieren" style="cursor:pointer;"/></span>&nbsp;&nbsp;&nbsp;
+			<span id="archivemodelspan_{$modellid}"><img class="{if $archiv == 1}image-aac{else}image-ainac{/if} images archivemodel" src="http://www.webmart.de/dot.gif" id="archivemodel_{$modellid}" title="Archiv aktivieren / deaktivieren" style="cursor:pointer;"/></span>
+			{if $schedule}
+				&nbsp;&nbsp;&nbsp;<img class="image-cal images" src="http://www.webmart.de/dot.gif" id="schedule_{$modellid}" title="Zeitsteuerung aktiv" />
+			{/if}
+		</div>
+	</div>
+{/template}
+
+/**
+ * Render one comment item
+ * @param element
+ * @param date
+ */
+{template .commentitem}
+	<div id="comment_{$element.id}" class="news_commentbox">
+		<div style="float:right" id="comment_nav_{$element.id};" style="width:50px;">			
+			<img class="image-edit images" id="edit_comment" src="/dot.gif" title="Kommentar editieren" alt="Kommentar editieren">&nbsp;&nbsp;
+			<img class="image-cross images" id="delete_comment" src="/dot.gif" title="Kommentar l&ouml;schen" alt="Kommentar l&ouml;schen">
+		</div>
+		<div style="float:left">
+			<table>
+				<tr>
+					<td width="100">{if not $element.status}<img class="image-inac images" src="/dot.gif" id="activate_comment" title="Kommentar freischalten" alt="Kommentar freischalten" style="cursor:pointer" />&nbsp;&nbsp;{/if}Name:</td>
+					<td><a href="mailto: {$element.email}" target="blank" />{$element.name}</a></td>
+				</tr>
+				<tr id="comment_email_{$element.id}" style="display:none">
+					<td>Email: </td>
+					<td>{$element.email}<br /> (Die Email wird nicht ver&ouml;ffentlicht.)</td>
+				</tr>
+				<tr>
+					<td>Datum:</td>
+					<td>{$date}</td>
+				</tr>
+				<tr>
+					<td style="vertical-align:top">Nachricht:</td>
+					<td id="comment_message_{$element.id}">{$element.message}</td>
+				</tr>
+			</table>
+		</div>
+		<div style="clear:both">
+	</div>	
+{/template}
+
+/**
+ * Render the editbox for the model
+ * @param element
+ * @param ispaid
+ * @param nuid
+ */
+{template .editmodel}	
+	<div id="edit_error" style="display:none"></div>
+	<div id="edit_accordion">		
+		<h3><a href="#">News-Text</a></h3>		
+		<div id="edit_newstext">				
+			<div class="news_columns news_aracnav">
+				Artikel anzeigen: <input name="edit_isactive" id="edit_isactive" type="checkbox" {if $element.active == 1} checked="checked"{/if}/>&nbsp;&nbsp;&nbsp;
+				Artikel im Archiv: <input name="edit_archiv" id="edit_archiv" type="checkbox" {if $element.archiv == 1} checked="checked"{/if}/>
+			</div>
+			<div style="clear:both"></div>
+						
+			<div class="news_columns">
+				<h3 class="news_item">&Uuml;berschrift:</h3>
+				<input type="text" name="edit_header" id="edit_header" value="{$element.header}" class="wmtext" />
+			</div>
+			
+			<div class="news_columns" id="edit_teaserdiv"{if $element.rss_type == 1} style="display:none"{/if}>
+				<h3 class="wmns_item">Text:</h3>
+				<textarea class="wmtextarea" name="edit_teaser" id="edit_teaser">
+					{$element.teaser}
+				</textarea>
+				<div class="news_infotext">Dieser Text ist dient als "Anrei&szlig;er" - Text (max. 2000 Zeichen). Der eigentliche Text sollte im "Haupttext" geschrieben werden.</div>
+			</div>
+			
+			<div class="news_columns">
+				<h3 class="wmns_item">Datum</h3>		
+				<div class="column_1_2">
+					Datum anzeigen:
+				</div>
+				<div class="column_2_2">
+					<div class="column_1_2">
+						<select class="wmselect" name="edit_dateposition" id="edit_dateposition" style="width: 150px;">
+							<option value="0" {if $element.dateposition == 0}selected="selected"{/if}>nicht anzeigen</option>
+							<option value="1" {if $element.dateposition == 1}selected="selected"{/if}>links</option>
+							<option value="2" {if $element.dateposition == 2}selected="selected"{/if}>rechts</option>
+						</select>
+					</div>
+					<div class="column_2_2" id="edit_publicdatediv" {if $element.dateposition == 0}style="display:none"{/if}>
+						&nbsp;&nbsp;&nbsp;<input type="text" name="edit_publicdate" class="wmtext" style="width: 70px;" id="edit_publicdate" value="{$element.pubdate}" disabled="disabled"/>
+					</div>
+					<div style="clear:both"></div>					
+					<div class="news_infotext">Sie k&ouml;nnen optional ein Datum neben der &Uuml;berschrift positionieren.</div>
+				</div>
+				<div style="clear:both"></div>
+			</div>			
+		</div>
+		
+		<h3><a href="#">Haupttext</a></h3>
+		<div>
+			<div id="edit_storydiv"{if $element.rss_type == 1} style="display:none"{/if}>
+				<div class="news_columns">
+					<h3 class="wmns_item">Verlinkung auf den Haupttext oder externe URL</h3>
+					<div class="news_desc" style="margin-bottom: 15px">
+						Ein Haupttext ist ein weiterf&uuml;hrender Text zu einem News-Artikel. Der News-Text kann hierbei als Anreissertext genutzt werden.
+					</div>					
+					<input name="edit_link_body_active" id="link_body_active0" value="0" type="radio"{if $element.link_body_active == 0} checked="checked"{/if} /><label for="link_body_active0" class="wmlabel">deaktiviert</label>&nbsp;&nbsp;				
+					<input name="edit_link_body_active" id="link_body_active2" value="2" type="radio"{if $element.link_body_active == 2} checked="checked"{/if} /><label for="link_body_active2" class="wmlabel">auf Haupttext</label>&nbsp;&nbsp;
+					<input name="edit_link_body_active" id="link_body_active1" value="1" type="radio"{if $element.link_body_active == 1} checked="checked"{/if} /><label for="link_body_active1" class="wmlabel">auf externe URL</label>
+				</div>
+				
+				<div id="edit_storybox"{if $element.link_body_active == 0} style="display:none;"{/if}>		
+							
+					<!-- External Story Link -->
+					<div{if $element.link_body_active != 1}  style=" display:none "{/if} id="edit_external" class="news_columns">
+						<div class="news_item">
+							<div class="column_1_2">
+								Ziel:
+							</div>
+							<div class="column_2_2">
+								<select class="wmselect" name="edit_show_in_target" id="edit_show_in_target" style="width: 250px;">
+									<option value="0"{if $element.target == 0} selected="selected"{/if}>gleiches Fenster (_self)</option>
+									<option value="3"{if $element.target == 3} selected="selected"{/if}>gleicher Browser (_top)</option>
+									<option value="2"{if $element.target == 2} selected="selected"{/if}>neues Fenster (PopUp)</option>
+									<option value="1"{if $element.target == 1} selected="selected"{/if}>neuer Browser (_blank)</option>
+								</select>
+							</div>
+							<div style="clear:both"></div>
+						</div>
+						<div class="news_item">
+							<div class="column_1_2">
+								URL:
+							</div>
+							<div class="column_2_2">
+								<input type="text" name="edit_linkurl" id="edit_linkurl" value="{$element.linkurl}" class="wmtext" style="width: 240px;" /> 
+							</div>
+							<div style="clear:both"></div>
+						</div>
+					</div>					
+						
+					<!-- Story -->
+					<div{if $element.link_body_active != 2}  style="display:none;"{/if} id="edit_storylink" class="news_columns">
+						<div class="column_1_2">
+							Haupttext:
+						</div>
+						<div class="column_2_2">
+							<textarea class="wmtextarea" name="edit_story" id="edit_story" style="width:400px">
+								{$element.body} 
+							</textarea>
+						</div>
+						<div style="clear:both"></div>
+					</div>					
+					
+					
+					<!-- Story Button -->
+					<div id="edit_storydtetail" class="news_columns">
+						<div>
+							<h3 class="wmns_item">Haupttext-Button</h3>
+							<div class="news_desc" style="margin-bottom: 15px">
+								Der Haupttext-Button ist der Link, der zum Haupttext oder auf die externe URL f&uuml;hrt. Hierbei kann es sich entweder um einen Textlink oder ein verlinktes Bild handeln.
+							</div>
+							<div class="news_item">
+								<div class="column_1_2">
+									Haupttext-Button:
+								</div>
+								<div class="column_2_2">
+									<select class="wmselect" name="edit_more_active" id="edit_more_active" style="width: 250px;">
+										<option value="0" id="edit_more_active0"{if $element.more_active == 0}selected="selected"{/if}>kein Haupttext-Button</option>
+										<option value="2" id="edit_more_active2" {if $element.more_active == 2}selected="selected"{/if}>Link-Text aktiv</option>
+										<option value="1" id="edit_more_active1" {if $element.more_active == 1}selected="selected"{/if}>Bild-URL aktiv</option>
+									</select>
+								</div>
+								<div style="clear:both"></div>
+							</div>
+							<div class="news_infotext" style="margin-bottom:15px">
+								Wenn Sie "kein Haupttext-Button" w&auml;hlen, werden standardm&auml;&szlig;ig &Uuml;berschrift und Bild (falls vorhanden) verlinkt.
+							</div>
+						</div>
+						
+						<div id="edit_morelinktext"{if $element.more_active == 0 or $element.more_active == 1}style="display:none"{/if} class="news_item">					
+							<div class="column_1_2">
+								Link-Text:
+							</div>
+							<div class="column_2_2">
+								<input type="text" name="edit_more_text" id="edit_more_text" value="{$element.more_text}" class="wmtext" style="width: 240px;" />
+							</div>
+							<div style="clear:both"></div>
+						</div>
+						
+						<div id="edit_morelimgurl"{if $element.more_active == 0 or $element.more_active == 2}style="display:none"{/if} class="news_item">	
+							<div class="column_1_2">
+								Bild-URL:
+							</div>
+							<div class="column_2_2">
+								<input type="text" name="edit_more_image" id="edit_more_image" value="{$element.more_image}" class="wmtext" style="width: 240px;" /> 
+							</div>
+							<div style="clear:both"></div>
+						</div>
+						
+						<div id="edit_morelposition"{if $element.more_active == 0}style="display:none"{/if} class="news_item">	
+							<div class="column_1_2">
+								Position:
+							</div>
+							<div class="column_2_2">
+								<select class="wmselect" name="edit_more_position" id="edit_more_position" style="width: 250px;">
+									<option value="1" {if $element.more_position == 1}selected="selected"{/if}>links</option>
+									<option value="2" {if $element.more_position == 2}selected="selected"{/if}>zentriert</option>
+									<option value="3" {if $element.more_position == 3}selected="selected"{/if}>rechts</option>
+								</select> 
+							</div>
+							<div style="clear:both"></div>
+						</div>
+					</div>									
+				</div>
+				<div class="news_columns">
+					<div class="news_infotext">
+						Tipp: Legen Sie im Men&uuml; Einstellungen Ihre Standard-Einstellungen f&uuml;r Ihre k&uuml;nftigen News-Artikel fest.
+					</div>
+				</div>				
+			</div>
+			
+			<div id="edit_story_rss" style="{if $element.rss_type == 0}display:none;{/if}" class="ui-state-highlight ui-corner-all news_rssdiv">
+				<p><span class="ui-icon ui-icon-info news_infoicon"></span>
+				<b>Achtung:</b> Es kann nur ein Haupttext erstellt werden, wenn RSS deaktiviert ist. Diese Option finden Sie unter dem Register "RSS".</p>				
+			</div>						
+		</div>
+		
+		<h3><a href="#">Bild</a></h3>
+		<div>
+			<div id="edit_imgdiv"{if $element.rss_type == 1} style="display:none"{/if}>
+				<div class="news_columns">
+					<h3 class="wmns_item">Bild in News-Text und / oder Haupttext</h3>	
+					<div class="column_1_2">
+						Bild anzeigen:
+					</div>
+					<div class="column_2_2">
+						<select class="wmselect" name="edit_image_active" id="edit_image_active" style="width: 250px;">
+							<option value="0" id="edit_imgshow0" {if $element.image_active == 0}selected="selected"{/if}>nicht anzeigen</option>
+							<option value="1" id="edit_imgshow1" {if $element.image_active == 1}selected="selected"{/if}>im Text anzeigen</option>
+							<option value="2" id="edit_imgshow2" {if $element.image_active == 2}selected="selected"{/if}>im Haupttext anzeigen</option>
+							<option value="3" id="edit_imgshow3" {if $element.image_active == 3}selected="selected"{/if}>im Text und Haupttext</option>
+						</select>
+					</div>
+					<div style="clear:both"></div>
+										
+					<div class="news_infotext">
+						W&auml;hlen Sie hier, ob das Bild nur in der News-&Uuml;bersicht oder auch im Haupttext dargestellt werden soll.
+					</div>
+				</div>
+					
+				<div id="edit_imgbox"{if $element.image_active == 0} style="display:none"{/if} class="news_columns">							
+					<div id="edit_previewimage" class="news_imgpreview">
+						{if length($element.imageurl) > 8}
+							<h3>Bild-Vorschau</h3>
+							<div style="text-align:center">
+								<img src="{$element.imageurl}" /><br /><br />
+								{if $element.imgsrc == 0}
+									<input type="button" class="ui-button ui-button-text-only ui-widget ui-state-default ui-corner-all" value="Bild editieren" name="edit_editimg" id="edit_editimg" />
+								{else}
+									<input type="button" class="ui-button ui-button-text-only ui-widget ui-state-default ui-corner-all" value="Bild l&ouml;schen" name="edit_delimg" id="edit_delimg" />
+								{/if}
+							</div>
+						{/if}
+					</div>
+					
+					<div class="news_item">
+						<div class="column_1_2">
+							Bild-Position:
+						</div>
+						<div class="column_2_2">
+							<input type="hidden" id="edit_imageposition" name="edit_imageposition" value="{$element.imageposition}" />
+							<div id="align_0">
+								<img src="http://www.webmart.de/dot.gif" id="alignImage_3_0" class="alignimages images image-alignl image-align-padding {if $element.imageposition == 3}image-align-active{/if}" />
+								<img src="http://www.webmart.de/dot.gif" id="alignImage_4_0" class="alignimages images image-alignr image-align-padding {if $element.imageposition == 4}image-align-active{/if}" />
+								<img src="http://www.webmart.de/dot.gif" id="alignImage_1_0" class="alignimages images image-alignfl image-align-padding {if $element.imageposition == 1}image-align-active{/if}" />
+								<img src="http://www.webmart.de/dot.gif" id="alignImage_2_0" class="alignimages images image-alignfr image-align-padding {if $element.imageposition == 2}image-align-active{/if}" />
+							</div>
+						</div>
+						<div style="clear:both"></div>
+					</div>	
+						
+					<div id="edit_img_settings" {if length($element.imageurl) > 8}style="display:none"{/if}>								
+						<div class="news_item">
+							<div class="column_1_2">
+								Bild-Quelle:
+							</div>
+							<div class="column_2_2">
+								<input name="edit_imgsrc" id="edit_imgsrc0" value="0" type="radio"{if $element.imgsrc == 0 or not $element.imgsrc} checked="checked"{/if} /><label for="edit_imgsrc0" class="wmlabel">URL angeben</label>&nbsp;&nbsp;				
+								<input name="edit_imgsrc" id="edit_imgsrc1" value="1" type="radio"{if $element.imgsrc == 1} checked="checked"{/if} /><label for="edit_imgsrc1" class="wmlabel">Bild hochladen</label>&nbsp;&nbsp;
+							</div>
+							<div style="clear:both"></div>
+						</div>
+								
+						<div id="edit_img_url"{if $element.edit_imgsrc == 1} style="display:none"{/if} class="news_item">
+							<div class="column_1_2">
+								Bild-URL: 
+							</div>
+							<div class="column_2_2">
+								<input class="wmtext" name="edit_imageurl" id="edit_imageurl" value="{$element.imageurl}" maxlength="255" type="text" style="width: 240px" />&nbsp;&nbsp;<input type="button" class="preview ui-button ui-button-text-only ui-widget ui-state-default ui-corner-all" id="previewimg" value="Vorschau" />
+							</div>
+							<div style="clear:both"></div>
+						</div>
+								
+						<div id="edit_img_upload"{if $element.edit_imgsrc == 0 or not $element.imgsrc} style="display:none"{/if} class="news_item">
+							{if not $ispaid}
+								<div style="margin-top: 20px; padding: 0pt 0.7em;" class="ui-state-highlight ui-corner-all">
+									<p><span class="ui-icon ui-icon-info" style="float: left; margin-right: 0.3em;"></span>
+									<b>Achtung:</b> Die Funktion <b>Bild hochladen</b> steht nur in der <a href="/login/w.cfm?app=14&id={$nuid}&cmd=351&appid=14" class="news_editlink">Vollversion</a> zur Verf&uuml;gung.</p>				
+								</div>
+							{else}
+								<form action="/login/w.cfm?cmd=839&app=14&id={$nuid}&eid={if $element.id}{$element.id}{else}0{/if}" target="uploadFrame" id="photouploadform" enctype="multipart/form-data" method="POST">
+									<div class="news_item">
+										<div class="column_1_2">
+											Bild-Upload:
+										</div>
+										<div class="column_2_2">											
+											<div id="photoupload">													
+												<input class="file hidden" id="imageUpload" name="imageUpload" type="file">													
+											</div>											
+											<div id="uploadprogress" style="display: none;"><img src="/login/news/img/ajax_save.gif" title="Bild wird hochgeladen..." alt="Bild wird hochgeladen..." /></div>
+											<div id="iframediv" style="display:none;">
+												<iframe name="uploadFrame" id="uploadFrame" src="" frameborder="0" width="0" height="0"></iframe>				
+											</div>
+										</div>	
+										<div style="clear:both"></div>
+									</div>
+									<div class="news_item">
+										<div class="column_1_2">
+											Bild-Breite:
+										</div>
+										<div class="column_2_2">
+											<select class="wmselect" name="imageupload_width" id="imageupload_width" style="width: 250px;">
+												{for $i in range(100, 410, 10)}
+													  <option value="{$i}">{$i} px</option>
+												{/for}
+											</select>
+											<div class="news_infotext">
+												Bilder, die hochgeladen werden, werden auf die hier angegebenen Breite bzw. H&ouml;he angepasst.
+											</div>
+										</div>
+										<div style="clear:both"></div>
+									</div>										
+								</form> 
+							{/if}
+						</div>
+					</div>
+				</div>	
+			</div>
+			<div id="edit_img_rss" style="{if $element.rss_type == 0}display:none;{/if}" class="ui-state-highlight ui-corner-all news_rssdiv">
+				<p><span class="ui-icon ui-icon-info news_infoicon"></span>
+				<b>Achtung:</b> Es kann nur ein Bild eingebunden werden, wenn RSS deaktiviert ist. Diese Option finden Sie unter dem Register "RSS".</p>				
+			</div>				
+		</div>
+		
+		<h3><a href="#">Zeitsteuerung</a></h3>
+		<div>
+			<div class="news_columns">
+				<h3>Zeitsteuerung</h3>
+				<div class="news_desc">
+					Legen Sie fest, ob dieser News-Artikel zeitgesteuert angezeigt werden soll und wenn ja, wann und wie lange. Artikel mit abgelaufener Zeitsteuerung werden nicht gel&ouml;scht.
+				</div>
+			</div>
+			<div class="news_columns">
+				<div class="news_item">	
+					<div class="column_1_2">
+						Zeitsteuerung aktiv:
+					</div>
+					<div class="column_2_2">
+						<input type="checkbox" name="edit_isschedule" id="edit_isschedule" {if $element.isschedule == 1}checked="checked"{/if} {if not $ispaid}disabled="disabled"{/if}/>
+					</div>
+					<div style="clear:both"></div>
+				</div>
+					
+				<div id="edit_schedulediv" {if $element.isschedule == 0 or not $ispaid}style="display:none"{/if}>
+					<div class="news_item">
+						<div class="column_1_2">
+							Startdatum:
+						</div>
+						<div class="column_2_2">
+							<input type="text" name="edit_startdate" id="edit_startdate" value="{$element.startdate}" style="width: 240px;" disabled="disabled" />
+						</div>
+						<div style="clear:both"></div>
+					</div>
+					<div class="news_item">
+						<div class="column_1_2">
+							Enddatum:
+						</div>
+						<div class="column_2_2">
+							<input type="text" name="edit_enddate" id="edit_enddate" value="{$element.enddate}" style="width: 240px" disabled="disabled" />
+						</div>
+						<div style="clear:both"></div>
+					</div>
+				</div>				
+				{if not $ispaid}
+					<div style="margin-top: 20px; padding: 0pt 0.7em;" class="ui-state-highlight ui-corner-all">
+						<p><span class="ui-icon ui-icon-info" style="float: left; margin-right: 0.3em;"></span>
+						<b>Achtung:</b> Die Funktion Zeitsteuerung steht nur in der <a href="/login/w.cfm?app=14&id={$nuid}&cmd=351&appid=14" class="news_editlink">Vollversion</a> zur Verf&uuml;gung.</p>				
+					</div>
+				{/if}
+			</div>
+		</div>
+		
+		
+		<h3><a href="#">RSS</a></h3>
+		<div>
+			<div class="news_columns">
+				<h3>RSS-Feed</h3>
+				<div class="news_desc">
+					Sie haben die M&ouml;glichkeit, an Stelle eines eigenen News-Artikels die Inhalte aus einem RSS-Feed zu beziehen. Geben Sie die URL zu einem g&uuml;ltigen <a href="http://blog.webmart.de/2007/04/29/rss-reader/" target="_blank">RSS-Feed</a> an. Die Inhalte werden automatisch eingelesen.
+				</div>
+			</div>
+			<div class="news_columns">
+				<div class="news_item">
+					<div class="column_1_2">
+						RSS-Feed:
+					</div>
+					<div class="column_2_2">
+						<input name="edit_rss_type" id="rss_type0" value="0"{if $element.rss_type == 0} checked="checked"{/if} type="radio"><label for="rss_type0" class="wmlabel">inaktiv</label>&nbsp;&nbsp;
+						<input name="edit_rss_type" id="rss_type1" value="1"{if $element.rss_type == 1} checked="checked"{/if} type="radio"><label for="rss_type1" class="wmlabel">aktiv</label>
+					</div>
+					<div style="clear:both"></div>
+				</div>
+				
+				<div id="edit_rsscontent"{if $element.rss_type == 0} style="display:none;"{/if}>
+					<div class="news_item">
+						<div class="column_1_2">
+							RSS-Url:
+						</div>
+						<div class="column_2_2">
+							<input type="text" name="edit_rssurl" id="edit_rssurl" class="wmtext" value="{$element.rss_url}" style="width: 240px" />
+						</div>
+						<div style="clear:both"></div>
+					</div>
+					<div class="news_item">
+						<div class="column_1_2">
+							Artikel-Anzahl:
+						</div>
+						<div class="column_2_2">
+							<select class="wmselect" name="edit_rss_count" id="edit_rss_count" style="width: 250px;">
+								{for $i in range(1, 11, 1)}
+									  <option value="{$i}" {if $element.rss_count == $i}selected="selected"{/if}>{$i}</option>
+								{/for}
+							</select>
+						</div>
+						<div style="clear:both"></div>
+					</div>
+					<div class="news_item news_infotext">
+						<b>Achtung:</b> Bei dem RSS-Feed muss es sich um g&uuml;ltiges RSS handeln (RSS 2.0 konform). Es muss mindestens <title> sowie <link> vorhanden sein. Sind <pubdate> oder <description> ebenfalls vorhanden, werden diese mit ausgegeben.
+						<br /><br />
+						RSS-Beispiele:<br />
+						http://de.news.yahoo.com/rss/fussball.xml<br />
+						http://blog.webmart.de/feed/<br />
+						http://www.wetter.com/wetter_rss/wetter.xml<br /><br />
+					
+						Viele weitere aktuelle Feeds gibt es bei <a href="http://de.news.yahoo.com/rss-feeds/" target="_blank">Yahoo</a>.
+					</div>
+				</div>
+			</div>
+		</div>
+	</div> <!-- edit_accordion -->	
+{/template}
+
+
+/**
+ * Render one article item
+ * @param element
+ * @param c
+ * @param f
+ * @param df
+ * @param wmid
+ * @param nuid
+ */
+{template .renderitem}	
+	{if not $f}
+		<div class="wmnews_spacer"></div>
+	{/if}
+	
+	<div class="wmnews_box" id="wmnews_{$element.id}">	
+		
+		{if length($element.imageurl) > 7  and ( $element.image_active != 0 and ($element.imageposition == 1 or $element.imageposition == 2) )}
+			{if ($element.image_active == 1 or $element.image_active == 3)}	
+				
+				<table class="wmnews_table">
+				<tr>				
+					{if $element.imageposition == 1}
+						<td style="width:10px">
+							{if $element.link_body_active == 1}						
+								{if $element.target == 2}
+									<a href="#" onclick="NSBACKEND.openURL('{$element.linkurl}'); return false;">
+								{else}								
+									<a href="{$element.linkurl}" target="{if $element.target == 0}_self{elseif $element.target == 1}_blank{elseif $element.target == 3}_top{/if}">
+								{/if}
+							{elseif $element.link_body_active == 2}
+								<a href="#" onclick="NSBACKEND.showDetailView({$wmid},{$nuid},{$element.id}); return false;">
+							{/if}						
+								<img src="{$element.imageurl}" class="wmnews_titlebodynowrapleft">
+							{if $element.link_body_active != 0}
+								</a>
+							{/if}												
+						</td>										
+					{/if}
+					<td>
+			{/if}
+		{/if}
+		
+		<div class="wmnews_header">
+			<table>
+			<tr>
+				{if $element.dateposition == 1}			 				
+					<td class="wmnews_date" style="padding-right: 10px;">
+						{call wmsoy.newssystem.backend.renderdate}	
+							{param d: $element.showdate /}
+							{param f: $df /}		
+						{/call}	
+					</td>
+				{/if}
+				<td class="wmnews_title">			
+					{if $element.link_body_active == 1}						
+						{if $element.target == 2}
+							<a href="#" onclick="NSBACKEND.openURL('{$element.linkurl}'); return false;">
+						{else}								
+							<a href="{$element.linkurl}" target="{if $element.target == 0}_self{elseif $element.target == 1}_blank{elseif $element.target == 3}_top{/if}">
+						{/if}
+					{elseif $element.link_body_active == 2}
+						<a href="#" onclick="NSBACKEND.showDetailView({$wmid},{$nuid},{$element.id}); return false;">
+					{/if}
+					
+					{$element.header |noAutoescape}
+					
+					{if $element.link_body_active != 0}
+						</a>
+					{/if}												
+				</td>
+				{if $element.dateposition == 2}			 				
+					<td class="wmnews_date" style="text-align: right; padding-left: 10px;">
+						{call wmsoy.newssystem.backend.renderdate}	
+							{param d: $element.showdate /}
+							{param f: $df /}		
+						{/call}	
+					</td>
+				{/if}
+			</tr>
+			</table>
+		</div>
+		<div class="wmnews_teaser">
+			{if length($element.imageurl) > 7  and ( $element.image_active != 0 and ($element.imageposition == 3 or $element.imageposition == 4) )}
+				{if ($element.image_active == 1 or $element.image_active == 3)}						
+					{if $element.link_body_active == 1}						
+						{if $element.target == 2}
+							<a href="#" onclick="NSBACKEND.openURL('{$element.linkurl}'); return false;">
+						{else}								
+							<a href="{$element.linkurl}" target="{if $element.target == 0}_self{elseif $element.target == 1}_blank{elseif $element.target == 3}_top{/if}">
+						{/if}
+					{elseif $element.link_body_active == 2}
+						<a href="#" onclick="NSBACKEND.showDetailView({$wmid},{$nuid},{$element.id}); return false;">
+					{/if}						
+						<img src="{$element.imageurl}" class="{if $element.imageposition == 3}wmnews_bodywrapleft{elseif $element.imageposition == 4 }wmnews_bodywrapright{/if}">
+					{if $element.link_body_active != 0}
+						</a>
+					{/if}				
+				{/if}
+			{/if}	
+			
+			{if $element.rss_type == 1}
+				{$element.body |noAutoescape}
+			{else}
+				{$element.teaser |noAutoescape}
+			{/if}
+		</div>			
+			
+		{if length($element.imageurl) > 7  and ( $element.image_active != 0 and ($element.imageposition == 1 or $element.imageposition == 2) )}
+			{if ($element.image_active == 1 or $element.image_active == 3)}	
+						</td>
+						{if $element.imageposition == 2}
+							<td style="width:10px">
+								{if $element.link_body_active == 1}						
+									{if $element.target == 2}
+										<a href="#" onclick="NSBACKEND.openURL('{$element.linkurl}'); return false;">
+									{else}								
+										<a href="{$element.linkurl}" target="{if $element.target == 0}_self{elseif $element.target == 1}_blank{elseif $element.target == 3}_top{/if}">
+									{/if}
+								{elseif $element.link_body_active == 2}
+									<a href="#" onclick="NSBACKEND.showDetailView({$wmid},{$nuid},{$element.id}); return false;">
+								{/if}						
+									<img src="{$element.imageurl}" class="wmnews_titlebodynowrapright">
+								{if $element.link_body_active != 0}
+									</a>
+								{/if}	
+							</td>									
+						{/if}
+					</tr>
+				</table>
+			{/if}		
+		{/if}
+		
+		<!--- Option Box --->
+		{if $element.more_active and ($element.link_body_active == 1 or $element.link_body_active == 2) or $c == 1 }
+			<div class="wmnews_option" id="wmnews_option_{$element.id}" style="text-align: {if $element.more_position == 1}left{elseif $element.more_position == 2}center{elseif $element.more_position == 3}right{/if}">
+				{if $c == 1}
+					<a href="#" onclick="NSBACKEND.showDetailView({$wmid},{$nuid},{$element.id}); return false;">
+						Kommentare {if $element.comments}({$element.comments}){/if}
+					</a>&nbsp;&nbsp;
+				{/if}				
+			
+				{if $element.link_body_active != 0 and $element.more_active != 0}	
+					{if $element.link_body_active == 1}						
+						{if $element.target == 2}
+							<a href="#" onclick="NSBACKEND.openURL('{$element.linkurl}'); return false;">
+						{else}								
+							<a href="{$element.linkurl}" target="{if $element.target == 0}_self{elseif $element.target == 1}_blank{elseif $element.target == 3}_top{/if}">
+						{/if}
+					{elseif $element.link_body_active == 2}
+						<a href="#" onclick="NSBACKEND.showDetailView({$wmid},{$nuid},{$element.id}); return false;">
+					{/if}
+										
+					{if $element.more_active == 1}
+						<img src="{$element.more_image}" />
+					{elseif $element.more_active == 2}
+						{$element.more_text |noAutoescape}
+					{/if}
+					
+					</a>
+				{/if}	
+			</div>
+		{/if}
+	</div>
+	{if $c == 1 and $element.allcomments}
+		<div id="edit_comments">
+			<div id="comment_closediv_{$element.id}" class="comment_closediv" style="float:right; text-align:right; display:none">
+			 	<span class="ui-icon ui-icon-closethick" id="close_comment"></span> 
+			</div>
+			<div style="float:left; text-align:left;">
+				<a href="#" id="managecomments">Kommentare</a> (Gesamt: {$element.allcomments}{if $element.inactive_comment} /  davon {$element.inactive_comment} neu <img src="http://img.webmart.de/f/new.gif" title="Neue Kommentare vorhanden" alt="Neue Kommentare vorhanden" />{/if})
+			</div>
+			<div style="clear:both"></div>
+			<div id="edit_comments_{$element.id}" style="display:none" class="edit_commentdiv"></div>
+		</div>
+	{/if}
+{/template}
+
+
+/**
+ * Render the css only
+ * @param l
+ * @param popup
+ */
+{template .csscode}
+		{if $popup == 1}
+			html {lb} background-color: #{$l.popup_bgcolor}; {rb}{\n} 	
+			#wmnews_container_{$l.nuid} {lb} width: 100%; {rb}{\n}
+			#wmnews_container_{$l.nuid} #scroll_loading {lb} text-align:center; padding:20px; {rb}{\n}
+			
+			/*Comments*/	
+			#wmnews_container_{$l.nuid} #wmcomment_container {lb} text-align: left; border: {$l.border_size}px solid #{$l.border_color}; background-color: #{$l.body_bgcolor}; {rb}{\n}	
+			#wmnews_container_{$l.nuid} .wmcomment_header {lb} background-color: #{$l.header_bgcolor}; {rb}{\n}
+			#wmnews_container_{$l.nuid} .wmcomment_header .wmcomment_title {lb} font-weight: {$l.header_weight}; font-style: {$l.header_style}; color: #{$l.header_color}; font-size: {$l.header_size}px; text-align:left; padding: {$l.cellpadding}px; float: left; {rb}{\n}
+			#wmnews_container_{$l.nuid} .wmcomment_header #wmcomment_new_link {lb} font-size: {$l.header_size}px; white-space: nowrap; padding: {$l.cellpadding}px; float: right; {rb}{\n}
+			#wmnews_container_{$l.nuid} .wmcomment_header #wmcomment_new_link a {lb} color: #{$l.header_color}; text-decoration: none; {rb}{\n}
+			#wmnews_container_{$l.nuid} .wmcomment_box {lb} background-color: #{$l.body_bgcolor}; margin: 10px 0; clear: both; {rb}{\n}
+			#wmnews_container_{$l.nuid} .wmcomment_title {lb} font-weight: normal; font-style: normal; color: #202020;  {rb}{\n}
+			#wmnews_container_{$l.nuid} .wmcomment_title .wmcomment_author {lb} font-size: {$l.td_size}px; color: #{$l.td_color}; text-align:left; font-weight: bold; padding: {$l.cellpadding}px; float: left; {rb}{\n}
+			#wmnews_container_{$l.nuid} .wmcomment_title .wmcomment_date {lb} font-size: {$l.td_size}px; color: #{$l.td_color}; white-space: nowrap; font-weight: bold; padding: {$l.cellpadding}px; float: right; {rb}{\n}
+			#wmnews_container_{$l.nuid} .wmcomment_body {lb} margin: {$l.cellpadding}px; font-size: {$l.td_size}px; color: #{$l.td_color}; clear: both; {rb}{\n}
+			#wmnews_container_{$l.nuid} .wmcomment_body .formerror {lb} border:1px solid red !important; {rb}{\n}
+			#wmnews_container_{$l.nuid} #wmcomment_new_container {lb} text-align:left; border: {$l.border_size}px solid #{$l.border_color}; background-color: #{$l.body_bgcolor}; {rb}{\n}
+			#wmnews_container_{$l.nuid} #wmcomment_new_container .wmcomment_header .wmcomment_title {lb} float: none; {rb}{\n}
+			#wmnews_container_{$l.nuid} #wmcomment_new_container table {lb} border-collapse: collapse; empty-cells: show; {rb}{\n}
+			#wmnews_container_{$l.nuid} #wmcomment_new_container table tr {lb} vertical-align: top; {rb}{\n}
+			#wmnews_container_{$l.nuid} #wmcomment_new_container table tr td {lb} padding: {$l.cellpadding}px; font-size: {$l.td_size}px; color: #{$l.td_color}; {rb}{\n} 
+			#wmnews_container_{$l.nuid} #wmcomment_new_container .ftext {lb} width: 100%; border: 1px solid #cccccc; padding: 2px; font-size: {$l.td_size}px; {rb}{\n}
+			#wmnews_container_{$l.nuid} #wmcomment_new_container .ftextarea {lb} width: 100%; height: 100px; font-size: {$l.td_size}px; border: 1px solid #cccccc; font-family: {$l.font_family}; padding: 2px; {rb}{\n}
+			#wmnews_container_{$l.nuid} #wmcomment_new_container .fbtn {lb} border: 1px solid #cccccc; cursor: pointer; font-weight: normal; font-size: {$l.header_size}px; padding: 2px; color: #444; font-family: {$l.font_family}; {rb}{\n}
+			#wmnews_container_{$l.nuid} .wmcomment_status {lb} font-size: {$l.td_size}px; color: #{$l.td_color}; clear: both; padding: {$l.cellpadding}px; {rb}{\n}
+			#wmnews_container_{$l.nuid} #wmnews_recaptcha_error {lb} font-size: {$l.td_size}px; color: red; padding: {$l.cellpadding}px; {rb}{\n}
+			#wmnews_container_{$l.nuid} #wmcomment_loading {lb} text-align:center; padding:20px;{rb}{\n}
+			#wmnews_container_{$l.nuid} #wmcomment_cbmsg {lb} padding-top:20px;{rb}{\n}
+			
+		{else}
+			#wmnews_container_{$l.nuid} {lb} width: {if $l.table_width == 100}100%{else}{$l.table_width}px{/if}; {rb}{\n}
+		{/if}
+			
+		/* Allgemein */
+		#wmnews_{$l.webmartid}_{$l.nuid} {lb} text-align: {$l.align}; {rb}{\n} 	
+		#wmnews_container_{$l.nuid} {lb}{if $l.align == 'center'}margin-left: auto; margin-right: auto; {elseif $l.align == 'right'}margin-left: auto;{/if}; font-family: {$l.font_family}; text-align: left; {rb}{\n} 				
+		#wmnews_container_{$l.nuid} .wmnews_box {lb} border: {$l.border_size}px solid #{$l.border_color}; background-color: #{$l.body_bgcolor}; {rb}{\n} 	
+		
+		/* Header */
+		#wmnews_container_{$l.nuid} .wmnews_header {lb} background-color: #{$l.header_bgcolor}; {rb}{\n} 
+		#wmnews_container_{$l.nuid} .wmnews_header table {lb} width: 100%; border-collapse: collapse; empty-cells: show;{rb}{\n} 
+		#wmnews_container_{$l.nuid} .wmnews_header table tr {lb} vertical-align: top; {rb}{\n} 
+		#wmnews_container_{$l.nuid} .wmnews_header table tr td {lb} padding: {$l.cellpadding}px;{rb}{\n} 
+		#wmnews_container_{$l.nuid} .wmnews_title {lb} font-weight: {$l.header_weight}; font-style: {$l.header_style}; color: #{$l.header_color}; font-size: {$l.header_size}px; width: 95%; {rb}{\n} 
+		#wmnews_container_{$l.nuid} .wmnews_date {lb} font-weight: {$l.header_weight}; font-style: {$l.header_style}; color: #{$l.header_color}; font-size: {$l.header_size}px; white-space: nowrap; {rb}{\n} 
+		
+		#wmnews_container_{$l.nuid} .wmnews_title a:link, 
+		#wmnews_container_{$l.nuid} .wmnews_title a:visited, 
+		#wmnews_container_{$l.nuid} .wmnews_title a:active, 
+		#wmnews_container_{$l.nuid} .wmnews_title a:hover {lb} color: #{$l.header_color}; text-decoration: none; {rb}{\n} 
+				
+		/* Teaser */
+		#wmnews_container_{$l.nuid} .wmnews_teaser {lb} padding: {$l.cellpadding}px; background-color: #{$l.body_bgcolor}; font-size: {$l.td_size}px; color: #{$l.td_color}; font-weight: {$l.td_weight}; font-style: {$l.td_style} {rb}{\n} 
+		
+		/* Body */
+		#wmnews_container_{$l.nuid} .wmnews_body {lb} padding: {$l.cellpadding}px; background-color: #{$l.body_bgcolor}; font-size: {$l.td_size}px; color: #{$l.td_color}; font-weight: {$l.td_weight}; font-style: {$l.td_style} {rb}{\n} 
+		
+		/* Images */
+		#wmnews_container_{$l.nuid} img.wmnews_bodywrapleft {lb} float: left; margin-right: 10px; margin-bottom: 10px; {rb}{\n} 
+		#wmnews_container_{$l.nuid} img.wmnews_bodywrapright {lb} float: right; margin-left: 10px; margin-bottom: 10px; {rb}{\n} 
+		#wmnews_container_{$l.nuid} img.wmnews_titlebodynowrapleft {lb} margin: {$l.cellpadding}px; {rb}{\n} 
+		#wmnews_container_{$l.nuid} img.wmnews_titlebodynowrapright {lb} margin: {$l.cellpadding}px; {rb}{\n} 
+		
+		/* Option */
+		#wmnews_container_{$l.nuid} .wmnews_option {lb} clear: both; padding: {$l.cellpadding}px; font-size: {$l.td_size}px; {rb}{\n} 
+		#wmnews_container_{$l.nuid} .wmnews_teaser {lb} {rb}{\n} 
+		#wmnews_container_{$l.nuid} .wmnews_teaser a:link, 
+		#wmnews_container_{$l.nuid} .wmnews_teaser a:visited, 
+		#wmnews_container_{$l.nuid} .wmnews_teaser a:active, 
+		#wmnews_container_{$l.nuid} .wmnews_archiv a:link, 
+		#wmnews_container_{$l.nuid} .wmnews_archiv a:visited, 
+		#wmnews_container_{$l.nuid} .wmnews_archiv a:active,
+		#wmnews_container_{$l.nuid} .wmnews_option a:link, 
+		#wmnews_container_{$l.nuid} .wmnews_option a:visited,
+		#wmnews_container_{$l.nuid} .wmnews_option a:active {lb} color: #{$l.linkcolor}; text-decoration: none; {rb}{\n} 		
+		#wmnews_container_{$l.nuid} .wmnews_teaser a:hover, 
+		#wmnews_container_{$l.nuid} .wmnews_option a:hover, 
+		#wmnews_container_{$l.nuid} .wmnews_archiv a:hover {lb} color: #{$l.hovercolor}; text-decoration: none; {rb}{\n} 	
+		
+		/* Archiv */
+		#wmnews_container_{$l.nuid} .wmnews_archiv {lb} padding: {$l.cellpadding}px; font-size: {$l.td_size}px; background-color: #{$l.body_bgcolor}; border: {$l.border_size}px solid #{$l.border_color}; text-align: {$l.align}; {rb}{\n} 	
+		
+		/* Divers */
+		#wmnews_container_{$l.nuid} a:link,
+		#wmnews_container_{$l.nuid} a:visited, 
+		#wmnews_container_{$l.nuid} a:active {lb} color: #{$l.linkcolor}; text-decoration: none; {rb}{\n} 	
+		#wmnews_container_{$l.nuid} a:hover {lb} color: #{$l.hovercolor};  {rb}{\n} 	
+		#wmnews_container_{$l.nuid} .wmnews_spacer {lb} clear:both; padding-top: {$l.news_space}px; background-color: #{$l.ns_color}; {rb}{\n} 
+		#wmnews_container_{$l.nuid} .wmnews_table {lb} width: 100%; border-collapse: collapse; empty-cells: show; {rb}{\n} 
+		#wmnews_container_{$l.nuid} .wmnews_table tr {lb} vertical-align:top;{rb}{\n} 
+		#wmnews_container_{$l.nuid} .wmnews_table tr td {lb} padding: 0; {rb}{\n} 
+		#wmnews_container_{$l.nuid} p {lb} margin: 0px; padding: 0px; {rb}{\n} 
+		#wmnews_container_{$l.nuid} a img {lb} border: 0; {rb}{\n}
+		#wmnews_container_{$l.nuid} form {lb} margin: 0; padding: 0; {rb}{\n}
+		#wmnews_container_{$l.nuid} .wmnews_teaser:after, #wmnews_container_{$l.nuid} .wmnews_body:after {lb} content: "."; display: block; height: 0; clear: both; visibility: hidden; {rb}{\n}
+{/template}
+
+/**
+ * Render the date in the correct format
+ * @param d
+ * @param f
+ */
+{template .renderdate}
+	{if $f == 'dd.mm.yy'}
+		{$d.dd}.{$d.mm}.{$d.yy}
+	{elseif $f == 'dd.mm.yyyy'}
+		{$d.dd}.{$d.mm}.{$d.yyyy}
+	{elseif $f == 'yy-mm-dd'}
+		{$d.yy}-{$d.mm}-{$d.dd}
+	{elseif $f == 'yyyy-mm-dd'}
+		{$d.yyyy}-{$d.mm}-{$d.dd}
+	{elseif $f == 'dd/mm/yy'}
+		{$d.dd}/{$d.mm}/{$d.yy}
+	{elseif $f == 'dd/mm/yyyy'}
+		{$d.dd}/{$d.mm}/{$d.yyyy}
+	{elseif $f == 'mm/dd/yy'}
+		{$d.mm}/{$d.dd}/{$d.yy}
+	{elseif $f == 'mm/dd/yyyy'}
+		{$d.mm}/{$d.dd}/{$d.yyyy}
+	{/if}
+{/template}

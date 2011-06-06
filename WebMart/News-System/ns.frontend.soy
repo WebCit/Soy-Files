@@ -1,0 +1,443 @@
+{namespace wmsoy.newssystem.frontend}
+
+/**
+ * Render one single comment
+ * @param c
+ * @param df
+ */
+{template .rendercomment}	
+	<div class="wmcomment_box">			
+		<div class="wmcomment_title">
+			<div class="wmcomment_author">{$c.name}</div>
+			<div class="wmcomment_date">
+				{call wmsoy.newssystem.frontend.renderdate}	
+					{param d: $c.pubdate /}
+					{param f: $df /}		
+				{/call}	
+			</div>
+		</div>
+		<div class="wmcomment_body">			
+			{$c.comment |noAutoescape}
+		</div>
+	</div>		
+{/template}
+
+/**
+ * Render the comment formular
+ */
+{template .renderwritecomment}	
+	<div id="wmcomment_loading" style="display:none;"><img src="http://s3-01.webmart.de/i/ajax-loader.gif" /></div>
+	<div id="wmcomment_form">
+		<div class="wmcomment_header">
+			<div class="wmcomment_title">Kommentar schreiben</div>
+		</div>		
+		<div class="wmcomment_body">
+			<form>
+				<table>
+				<tr>
+					<td>Name:</td>
+					<td><input name="name" id="wmcomment_name" maxlength="30" type="text" class="ftext" value="" tabindex="1" /></td>
+				</tr>
+				<tr>
+					<td>Email-Adresse:</td>
+					<td><input name="email" id="wmcomment_email" maxlength="80" type="text" class="ftext" value="" tabindex="2" /><br>(Email-Adresse wird nicht ver&ouml;ffentlicht.)</td>
+				</tr>
+				<tr>
+					<td>Kommentar:</td>
+					<td><textarea name="message" id="wmcomment_message" class="ftextarea" tabindex="3"></textarea></td>
+				</tr>
+				<tr>
+					<td>Captcha:</td>
+					<td>
+						<div id="wmnews_recaptcha"></div>
+						<div id="wmnews_recaptcha_error" style="display:none"></div>
+					</td>
+				</tr>
+				<tr id="wmnews_comment_btn" style="display:none">
+					<td></td>
+					<td><input value="Abbrechen" onclick="NEWSSYSTEM.cancelComment(); return false;" type="button" class="fbtn" tabindex="6" />&nbsp;&nbsp;<input value="Abschicken" onclick="NEWSSYSTEM.submitComment(); return false;" type="button" class="fbtn" tabindex="5" /></td>
+				</tr>
+				</table>
+			</form>
+		</div>
+	</div>	
+{/template}
+
+
+/**
+ * Render on article in detail view with comment
+ * @param d
+ * @param c
+ * @param l
+ */
+{template .layoutdetail}	
+	<div id="wmnews_container_{$l.nuid}">
+		{call wmsoy.newssystem.frontend.renderitem}
+			{param element: $d /}
+			{param c: $l.comment /}		
+			{param f: 1 /}	
+			{param df: $l.dateformat /}
+			{param wmid: $l.webmartid /}
+			{param nuid: $l.nuid /}		
+		{/call}	
+		
+		{if $l.comment}
+			<div class="wmnews_spacer"></div>	
+			<div id="wmcomment_new_container" style="display:none"></div>
+			{if $l.comment}
+				<div id="wmcomment_container">		
+					<div class="wmcomment_header" id="wmnews_commentheader">
+						<div class="wmcomment_title">{if length($c)}Kommentare{/if}</div>
+						<div id="wmcomment_new_link"><a href="#" onclick="NEWSSYSTEM.addComment(); return false;">[Neuer Kommentar]</a></div>
+						<div style="clear:both"></div>
+					</div>
+					<div id="wmcomment_cbmsg" style="display:none"></div>
+					{foreach $comment in $c}
+						{call wmsoy.newssystem.frontend.rendercomment}
+							{param c: $comment /}
+							{param df: $l.dateformat /}	
+						{/call}	
+					{/foreach}							
+				</div>	
+			{/if}	
+		{/if}		
+		{if $l.archiv != 0 and $l.archivecount > 0}
+			<div class="wmnews_spacer"></div>	
+			<div class="wmnews_archiv" id="wmnews_archivlink">
+				<a href="/archive/{$l.webmartid}/{$l.nuid}">{$l.archiv_text}</a>
+			</div>
+		{/if}
+	</div>
+{/template}
+
+
+/**
+ * Render the news-system articles
+ * @param d
+ * @param l
+ */
+{template .layout}	
+	<div id="wmnews_container_{$l.nuid}">		
+		{foreach $element in $d}
+			{call wmsoy.newssystem.frontend.renderitem}
+				{param element: $element /}
+				{param c: $l.comment /}		
+				{param f: isFirst($element) /}	
+				{param df: $l.dateformat /}
+				{param wmid: $l.webmartid /}
+				{param nuid: $l.nuid /}		
+			{/call}	
+		{/foreach}
+				
+		{if $l.archiv != 0 and $l.archivecount > 0}
+			<div class="wmnews_spacer"></div>			
+			<div class="wmnews_archiv" id="wmnews_archivlink">
+				<a href="#" onclick="NEWSSYSTEM.showArchiv({$l.webmartid},{$l.nuid}); return false;">{$l.archiv_text}</a>	
+			</div>
+		{/if}	
+	</div>
+{/template}
+
+/**
+ * Render the css only
+ * @param l
+ * @param popup
+ */
+{template .csscode}
+		{if $popup == 1}
+			html {lb} background-color: #{$l.popup_bgcolor}; {rb}{\n} 	
+			#wmnews_container_{$l.nuid} {lb} width: 100%; {rb}{\n}
+			#wmnews_container_{$l.nuid} #scroll_loading {lb} text-align:center; padding:20px; {rb}{\n}
+			
+			/*Comments*/	
+			#wmnews_container_{$l.nuid} #wmcomment_container {lb} text-align: left; border: {$l.border_size}px solid #{$l.border_color}; background-color: #{$l.body_bgcolor}; {rb}{\n}	
+			#wmnews_container_{$l.nuid} .wmcomment_header {lb} background-color: #{$l.header_bgcolor}; {rb}{\n}
+			#wmnews_container_{$l.nuid} .wmcomment_header .wmcomment_title {lb} font-weight: {$l.header_weight}; font-style: {$l.header_style}; color: #{$l.header_color}; font-size: {$l.header_size}px; text-align:left; padding: {$l.cellpadding}px; float: left; {rb}{\n}
+			#wmnews_container_{$l.nuid} .wmcomment_header #wmcomment_new_link {lb} font-size: {$l.header_size}px; white-space: nowrap; padding: {$l.cellpadding}px; float: right; {rb}{\n}
+			#wmnews_container_{$l.nuid} .wmcomment_header #wmcomment_new_link a {lb} color: #{$l.header_color}; text-decoration: none; {rb}{\n}
+			#wmnews_container_{$l.nuid} .wmcomment_box {lb} background-color: #{$l.body_bgcolor}; margin: 10px 0; clear: both; {rb}{\n}
+			#wmnews_container_{$l.nuid} .wmcomment_title {lb} font-weight: normal; font-style: normal; color: #202020;  {rb}{\n}
+			#wmnews_container_{$l.nuid} .wmcomment_title .wmcomment_author {lb} font-size: {$l.td_size}px; color: #{$l.td_color}; text-align:left; font-weight: bold; padding: {$l.cellpadding}px; float: left; {rb}{\n}
+			#wmnews_container_{$l.nuid} .wmcomment_title .wmcomment_date {lb} font-size: {$l.td_size}px; color: #{$l.td_color}; white-space: nowrap; font-weight: bold; padding: {$l.cellpadding}px; float: right; {rb}{\n}
+			#wmnews_container_{$l.nuid} .wmcomment_body {lb} margin: {$l.cellpadding}px; font-size: {$l.td_size}px; color: #{$l.td_color}; clear: both; {rb}{\n}
+			#wmnews_container_{$l.nuid} .wmcomment_body .formerror {lb} border:1px solid red !important; {rb}{\n}
+			#wmnews_container_{$l.nuid} #wmcomment_new_container {lb} text-align:left; border: {$l.border_size}px solid #{$l.border_color}; background-color: #{$l.body_bgcolor}; {rb}{\n}
+			#wmnews_container_{$l.nuid} #wmcomment_new_container .wmcomment_header .wmcomment_title {lb} float: none; {rb}{\n}
+			#wmnews_container_{$l.nuid} #wmcomment_new_container table {lb} border-collapse: collapse; empty-cells: show; {rb}{\n}
+			#wmnews_container_{$l.nuid} #wmcomment_new_container table tr {lb} vertical-align: top; {rb}{\n}
+			#wmnews_container_{$l.nuid} #wmcomment_new_container table tr td {lb} padding: {$l.cellpadding}px; font-size: {$l.td_size}px; color: #{$l.td_color}; {rb}{\n} 
+			#wmnews_container_{$l.nuid} #wmcomment_new_container .ftext {lb} width: 100%; border: 1px solid #cccccc; padding: 2px; font-size: {$l.td_size}px; {rb}{\n}
+			#wmnews_container_{$l.nuid} #wmcomment_new_container .ftextarea {lb} width: 100%; height: 100px; font-size: {$l.td_size}px; border: 1px solid #cccccc; font-family: {$l.font_family}; padding: 2px; {rb}{\n}
+			#wmnews_container_{$l.nuid} #wmcomment_new_container .fbtn {lb} border: 1px solid #cccccc; cursor: pointer; font-weight: normal; font-size: {$l.header_size}px; padding: 2px; color: #444; font-family: {$l.font_family}; {rb}{\n}
+			#wmnews_container_{$l.nuid} .wmcomment_status {lb} font-size: {$l.td_size}px; color: #{$l.td_color}; clear: both; padding: {$l.cellpadding}px; {rb}{\n}
+			#wmnews_container_{$l.nuid} #wmnews_recaptcha_error {lb} font-size: {$l.td_size}px; color: red; padding: {$l.cellpadding}px; {rb}{\n}
+			#wmnews_container_{$l.nuid} #wmcomment_loading {lb} text-align:center; padding:20px;{rb}{\n}
+			#wmnews_container_{$l.nuid} #wmcomment_cbmsg {lb} padding-top:20px;{rb}{\n}
+			
+		{else}
+			#wmnews_container_{$l.nuid} {lb} width: {if $l.table_width == 100}100%{else}{$l.table_width}px{/if}; {rb}{\n}
+		{/if}
+			
+		/* Allgemein */
+		#wmnews_{$l.webmartid}_{$l.nuid} {lb} text-align: {$l.align}; {rb}{\n} 	
+		#wmnews_container_{$l.nuid} {lb}{if $l.align == 'center'}margin-left: auto; margin-right: auto; {elseif $l.align == 'right'}margin-left: auto;{/if}; font-family: {$l.font_family}; text-align: left; {rb}{\n} 				
+		#wmnews_container_{$l.nuid} .wmnews_box {lb} border: {$l.border_size}px solid #{$l.border_color}; background-color: #{$l.body_bgcolor}; {rb}{\n} 	
+		
+		/* Header */
+		#wmnews_container_{$l.nuid} .wmnews_header {lb} background-color: #{$l.header_bgcolor}; {rb}{\n} 
+		#wmnews_container_{$l.nuid} .wmnews_header table {lb} width: 100%; border-collapse: collapse; empty-cells: show;{rb}{\n} 
+		#wmnews_container_{$l.nuid} .wmnews_header table tr {lb} vertical-align: top; {rb}{\n} 
+		#wmnews_container_{$l.nuid} .wmnews_header table tr td {lb} padding: {$l.cellpadding}px;{rb}{\n} 
+		#wmnews_container_{$l.nuid} .wmnews_title {lb} font-weight: {$l.header_weight}; font-style: {$l.header_style}; color: #{$l.header_color}; font-size: {$l.header_size}px; width: 95%; {rb}{\n} 
+		#wmnews_container_{$l.nuid} .wmnews_date {lb} font-weight: {$l.header_weight}; font-style: {$l.header_style}; color: #{$l.header_color}; font-size: {$l.header_size}px; white-space: nowrap; {rb}{\n} 
+		
+		#wmnews_container_{$l.nuid} .wmnews_title a:link, 
+		#wmnews_container_{$l.nuid} .wmnews_title a:visited, 
+		#wmnews_container_{$l.nuid} .wmnews_title a:active, 
+		#wmnews_container_{$l.nuid} .wmnews_title a:hover {lb} color: #{$l.header_color}; text-decoration: none; {rb}{\n} 
+				
+		/* Teaser */
+		#wmnews_container_{$l.nuid} .wmnews_teaser {lb} padding: {$l.cellpadding}px; background-color: #{$l.body_bgcolor}; font-size: {$l.td_size}px; color: #{$l.td_color}; font-weight: {$l.td_weight}; font-style: {$l.td_style} {rb}{\n} 
+		
+		/* Body */
+		#wmnews_container_{$l.nuid} .wmnews_body {lb} padding: {$l.cellpadding}px; background-color: #{$l.body_bgcolor}; font-size: {$l.td_size}px; color: #{$l.td_color}; font-weight: {$l.td_weight}; font-style: {$l.td_style} {rb}{\n} 
+		
+		/* Images */
+		#wmnews_container_{$l.nuid} img.wmnews_bodywrapleft {lb} float: left; margin-right: 10px; margin-bottom: 10px; {rb}{\n} 
+		#wmnews_container_{$l.nuid} img.wmnews_bodywrapright {lb} float: right; margin-left: 10px; margin-bottom: 10px; {rb}{\n} 
+		#wmnews_container_{$l.nuid} img.wmnews_titlebodynowrapleft {lb} margin: {$l.cellpadding}px; {rb}{\n} 
+		#wmnews_container_{$l.nuid} img.wmnews_titlebodynowrapright {lb} margin: {$l.cellpadding}px; {rb}{\n} 
+		
+		/* Option */
+		#wmnews_container_{$l.nuid} .wmnews_option {lb} clear: both; padding: {$l.cellpadding}px; font-size: {$l.td_size}px; {rb}{\n} 
+		#wmnews_container_{$l.nuid} .wmnews_teaser {lb} {rb}{\n} 
+		#wmnews_container_{$l.nuid} .wmnews_teaser a:link, 
+		#wmnews_container_{$l.nuid} .wmnews_teaser a:visited, 
+		#wmnews_container_{$l.nuid} .wmnews_teaser a:active, 
+		#wmnews_container_{$l.nuid} .wmnews_archiv a:link, 
+		#wmnews_container_{$l.nuid} .wmnews_archiv a:visited, 
+		#wmnews_container_{$l.nuid} .wmnews_archiv a:active,
+		#wmnews_container_{$l.nuid} .wmnews_option a:link, 
+		#wmnews_container_{$l.nuid} .wmnews_option a:visited,
+		#wmnews_container_{$l.nuid} .wmnews_option a:active {lb} color: #{$l.linkcolor}; text-decoration: none; {rb}{\n} 		
+		#wmnews_container_{$l.nuid} .wmnews_teaser a:hover, 
+		#wmnews_container_{$l.nuid} .wmnews_option a:hover, 
+		#wmnews_container_{$l.nuid} .wmnews_archiv a:hover {lb} color: #{$l.hovercolor}; text-decoration: none; {rb}{\n} 	
+		
+		/* Archiv */
+		#wmnews_container_{$l.nuid} .wmnews_archiv {lb} padding: {$l.cellpadding}px; font-size: {$l.td_size}px; background-color: #{$l.body_bgcolor}; border: {$l.border_size}px solid #{$l.border_color}; text-align: {$l.align}; {rb}{\n} 	
+		
+		/* Divers */
+		#wmnews_container_{$l.nuid} a:link,
+		#wmnews_container_{$l.nuid} a:visited, 
+		#wmnews_container_{$l.nuid} a:active {lb} color: #{$l.linkcolor}; text-decoration: none; {rb}{\n} 	
+		#wmnews_container_{$l.nuid} a:hover {lb} color: #{$l.hovercolor};  {rb}{\n} 	
+		#wmnews_container_{$l.nuid} .wmnews_spacer {lb} clear:both; padding-top: {$l.news_space}px; background-color: #{$l.ns_color}; {rb}{\n} 
+		#wmnews_container_{$l.nuid} .wmnews_table {lb} width: 100%; border-collapse: collapse; empty-cells: show; {rb}{\n} 
+		#wmnews_container_{$l.nuid} .wmnews_table tr {lb} vertical-align:top;{rb}{\n} 
+		#wmnews_container_{$l.nuid} .wmnews_table tr td {lb} padding: 0; {rb}{\n} 
+		#wmnews_container_{$l.nuid} p {lb} margin: 0px; padding: 0px; {rb}{\n} 
+		#wmnews_container_{$l.nuid} a img {lb} border: 0; {rb}{\n}
+		#wmnews_container_{$l.nuid} form {lb} margin: 0; padding: 0; {rb}{\n}
+		#wmnews_container_{$l.nuid} .wmnews_teaser:after, #wmnews_container_{$l.nuid} .wmnews_body:after {lb} content: "."; display: block; height: 0; clear: both; visibility: hidden; {rb}{\n}
+{/template}
+
+
+/**
+ * Render one article item
+ * @param element
+ * @param c
+ * @param f
+ * @param df
+ * @param wmid
+ * @param nuid
+ */
+{template .renderitem}	
+	{if not $f}
+		<div class="wmnews_spacer"></div>
+	{/if}
+	
+	<div class="wmnews_box" id="wmnews_{$element.id}">	
+		
+		{if length($element.imageurl) > 7  and ( $element.image_active != 0 and ($element.imageposition == 1 or $element.imageposition == 2) )}
+			{if ($element.image_active == 1 or $element.image_active == 3) or ($element.image_active == 2 and $element.body)}	
+				
+				<table class="wmnews_table">
+				<tr>				
+					{if $element.imageposition == 1}
+						<td style="width:10px">
+							{if $element.link_body_active == 1}						
+								{if $element.target == 2}
+									<a href="#" onclick="NEWSSYSTEM.openURL('{$element.linkurl}'); return false;">
+								{else}								
+									<a href="{$element.linkurl}" target="{if $element.target == 0}_self{elseif $element.target == 1}_blank{elseif $element.target == 3}_top{/if}">
+								{/if}
+							{elseif $element.link_body_active == 2}
+								<a href="#" onclick="NEWSSYSTEM.showDetailView({$wmid},{$nuid},{$element.id}); return false;">
+							{/if}						
+								<img src="{$element.imageurl}" class="wmnews_titlebodynowrapleft">
+							{if $element.link_body_active != 0}
+								</a>
+							{/if}												
+						</td>										
+					{/if}
+					<td>
+			{/if}
+		{/if}
+		
+		<div class="wmnews_header">
+			<table>
+			<tr>
+				{if $element.dateposition == 1}			 				
+					<td class="wmnews_date" style="padding-right: 10px;">
+						{call wmsoy.newssystem.frontend.renderdate}	
+							{param d: $element.pubdate /}
+							{param f: $df /}		
+						{/call}	
+					</td>
+				{/if}
+				<td class="wmnews_title">	
+					{if not $element.body}				
+						{if $element.link_body_active == 1}						
+							{if $element.target == 2}
+								<a href="#" onclick="NEWSSYSTEM.openURL('{$element.linkurl}'); return false;">
+							{else}								
+								<a href="{$element.linkurl}" target="{if $element.target == 0}_self{elseif $element.target == 1}_blank{elseif $element.target == 3}_top{/if}">
+							{/if}
+						{elseif $element.link_body_active == 2}
+							<a href="#" onclick="NEWSSYSTEM.showDetailView({$wmid},{$nuid},{$element.id}); return false;">
+						{/if}
+					{/if}
+					
+					{$element.header |noAutoescape}
+					
+					{if not $element.body and $element.link_body_active != 0}
+						</a>
+					{/if}												
+				</td>
+				{if $element.dateposition == 2}			 				
+					<td class="wmnews_date" style="text-align: right; padding-left: 10px;">
+						{call wmsoy.newssystem.frontend.renderdate}	
+							{param d: $element.pubdate /}
+							{param f: $df /}		
+						{/call}	
+					</td>
+				{/if}
+			</tr>
+			</table>
+		</div>
+		<div class="wmnews_teaser">
+			{if length($element.imageurl) > 7  and ( $element.image_active != 0 and ($element.imageposition == 3 or $element.imageposition == 4) )}
+				{if ($element.image_active == 1 or $element.image_active == 3) or ($element.image_active == 2 and $element.body)}						
+					{if $element.link_body_active == 1}						
+						{if $element.target == 2}
+							<a href="#" onclick="NEWSSYSTEM.openURL('{$element.linkurl}'); return false;">
+						{else}								
+							<a href="{$element.linkurl}" target="{if $element.target == 0}_self{elseif $element.target == 1}_blank{elseif $element.target == 3}_top{/if}">
+						{/if}
+					{elseif $element.link_body_active == 2}
+						<a href="#" onclick="NEWSSYSTEM.showDetailView({$wmid},{$nuid},{$element.id}); return false;">
+					{/if}						
+						<img src="{$element.imageurl}" class="{if $element.imageposition == 3}wmnews_bodywrapleft{elseif $element.imageposition == 4 }wmnews_bodywrapright{/if}">
+					{if $element.link_body_active != 0}
+						</a>
+					{/if}				
+				{/if}
+			{/if}	
+			
+			{$element.teaser |noAutoescape}
+		</div>
+		{if $element.body}
+			<div class="wmnews_body">
+				{$element.body |noAutoescape}
+			</div>
+		{/if}
+			
+			
+		{if length($element.imageurl) > 7  and ( $element.image_active != 0 and ($element.imageposition == 1 or $element.imageposition == 2) )}
+			{if ($element.image_active == 1 or $element.image_active == 3) or ($element.image_active == 2 and $element.body)}	
+						</td>
+						{if $element.imageposition == 2}
+							<td style="width:10px">
+								{if $element.link_body_active == 1}						
+									{if $element.target == 2}
+										<a href="#" onclick="NEWSSYSTEM.openURL('{$element.linkurl}'); return false;">
+									{else}								
+										<a href="{$element.linkurl}" target="{if $element.target == 0}_self{elseif $element.target == 1}_blank{elseif $element.target == 3}_top{/if}">
+									{/if}
+								{elseif $element.link_body_active == 2}
+									<a href="#" onclick="NEWSSYSTEM.showDetailView({$wmid},{$nuid},{$element.id}); return false;">
+								{/if}						
+									<img src="{$element.imageurl}" class="wmnews_titlebodynowrapright">
+								{if $element.link_body_active != 0}
+									</a>
+								{/if}	
+							</td>									
+						{/if}
+					</tr>
+				</table>
+			{/if}		
+		{/if}
+			
+		{if not $element.body}
+			<!--- Option Box --->
+			{if $element.more_active and ($element.link_body_active == 1 or $element.link_body_active == 2) or $c == 1 }
+				<div class="wmnews_option" id="wmnews_option_{$element.id}" style="text-align: {if $element.more_position == 1}left{elseif $element.more_position == 2}center{elseif $element.more_position == 3}right{/if}">
+					{if $c == 1}
+						<a href="#" onclick="NEWSSYSTEM.showDetailView({$wmid},{$nuid},{$element.id}); return false;">
+							Kommentare {if $element.comments}({$element.comments}){/if}
+						</a>&nbsp;&nbsp;
+					{/if}
+					
+				
+					{if $element.link_body_active != 0 and $element.more_active != 0}	
+						{if $element.link_body_active == 1}						
+							{if $element.target == 2}
+								<a href="#" onclick="NEWSSYSTEM.openURL('{$element.linkurl}'); return false;">
+							{else}								
+								<a href="{$element.linkurl}" target="{if $element.target == 0}_self{elseif $element.target == 1}_blank{elseif $element.target == 3}_top{/if}">
+							{/if}
+						{elseif $element.link_body_active == 2}
+							<a href="#" onclick="NEWSSYSTEM.showDetailView({$wmid},{$nuid},{$element.id}); return false;">
+						{/if}
+											
+						{if $element.more_active == 1}
+							<img src="{$element.more_image}" />
+						{elseif $element.more_active == 2}
+							{$element.more_text |noAutoescape}
+						{/if}
+						
+						{if not $element.body and $element.link_body_active != 0}
+							</a>
+						{/if}	
+					{/if}	
+				</div>
+			{/if}
+		{/if}					
+	</div>
+{/template}
+
+/**
+ * Render the date in the correct format
+ * @param d
+ * @param f
+ */
+{template .renderdate}
+	{if $f == 'dd.mm.yy'}
+		{$d.dd}.{$d.mm}.{$d.yy}
+	{elseif $f == 'dd.mm.yyyy'}
+		{$d.dd}.{$d.mm}.{$d.yyyy}
+	{elseif $f == 'yy-mm-dd'}
+		{$d.yy}-{$d.mm}-{$d.dd}
+	{elseif $f == 'yyyy-mm-dd'}
+		{$d.yyyy}-{$d.mm}-{$d.dd}
+	{elseif $f == 'dd/mm/yy'}
+		{$d.dd}/{$d.mm}/{$d.yy}
+	{elseif $f == 'dd/mm/yyyy'}
+		{$d.dd}/{$d.mm}/{$d.yyyy}
+	{elseif $f == 'mm/dd/yy'}
+		{$d.mm}/{$d.dd}/{$d.yy}
+	{elseif $f == 'mm/dd/yyyy'}
+		{$d.mm}/{$d.dd}/{$d.yyyy}
+	{/if}
+{/template}	
